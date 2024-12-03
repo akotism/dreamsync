@@ -1,0 +1,97 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: skyblue;
+    padding: 20px;
+    text-align: center;
+}
+
+section {
+    padding: 20px;
+    margin-bottom: 60px; 
+}
+
+table {
+    width: 50%;
+    border-collapse: collapse;
+    margin: auto; /}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: lightgrey;
+}
+
+h2 {
+    text-align: center;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+nav ul li {
+    padding: 30px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: black;
+    text-decoration: none;
+    color: white; 
+    background-color: skyblue; 
+    padding: 5px 10px;
+    border-radius: 5px; 
+    margin: 0 5px; 
+    transition: background-color 0.3s, box-shadow 0.3s; }
+
+nav ul li a:hover {
+    background-color: blue;
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5); 
+}
+
+p {
+    margin-top: 20px;
+    text-align: center;
+}
+
+button#logout {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: skyblue;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+button#logout:hover {
+    background-color: red;
+}
+
