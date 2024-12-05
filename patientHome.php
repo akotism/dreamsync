@@ -104,7 +104,7 @@ $HCArr = $H->fetchAll(PDO::FETCH_ASSOC);
         <li><a href="./viewPolys.php">View Polysomnograms</a></li>
         <li><a href="./createSR.php">Create Sleep Report</a></li>
         <li><a href="./update.php">Update Your Information</a></li>
-        <li><a href="./delete.php">Delete Your Account</a></li>
+        <li><a href="./delete.php">Hello</a></li>
         
         
     </ul>
