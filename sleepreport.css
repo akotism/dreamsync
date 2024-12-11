@@ -11,9 +11,15 @@ body {
     border: 1px solid #ccc;
     border-radius: 5px;
 }
-
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 h1 {
     text-align: center;
+    flex:1;
+    margin:0;
 }
 
 form {
@@ -49,5 +55,30 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
     background-color: #0056b3;
+}
+
+#back {
+    background-color: #2a2a2a;
+    padding: 10px 20px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    flex-shrink: 0;
+}
+#back:hover {
+    background-color: #4b555c;
+}
+footer{
+    background-color:hsl(218, 10%, 15%);
+    font-size:14px;
+    color:#ffffff;
+    bottom:0;
+    width:100%;
+    font-family: verdana;    
+    margin-top: auto;
 }
 
