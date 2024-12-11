@@ -31,9 +31,9 @@ try {
 
     // Query to fetch the doctor's patients ordered by name
     $patientQuery = $db->prepare("
-        SELECT pname AS Name, Age, Sex, Height, Weight 
-        FROM Patient 
-        WHERE DID = ? 
+        SELECT pname AS Name, Age, Sex, Height, Weight
+        FROM Patient
+        WHERE DID = ?
         ORDER BY pname
     ");
     $patientQuery->bindParam(1, $_SESSION["ID"], PDO::PARAM_INT);
@@ -56,6 +56,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Home</title>
+    <link rel="stylesheet" href="./doctorHome.css">
 </head>
 <body>
     <div class="container">
@@ -92,11 +93,10 @@ try {
         <a id="view-polysomnogram" href="doctorPolysomnogram.php">View Polysomnogram Data</a>
         <a id="insert-patient" href="doctorUpdate.php">Update Patient Info</a>
         <a id="create-polysomnogram" href="createPS.php">Create Polysonmogram</a>
-        <a id="view-patient-health" href="viewPMC.php">View Patient Meds and Conditions</a>
+        <a id="view-patient-health" href="viewPMC.html">View Patient Meds and Conditions</a>
         <a id="delete-doctor" href="deleteDoctor.php">Delete Account</a>
-        
-        
+
+
     </div>
 </body>
 </html>
-
