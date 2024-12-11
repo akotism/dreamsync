@@ -1,60 +1,3 @@
-<?php
-// Include your database configuration file
-require_once("config.php");
-
-// Initialize variables
-$reportMsg = "";
-
-// Check if form is submitted
-if (isset($_POST["submit"])) {
-    // Get form inputs
-    $patientName = $_POST["patientName"];
-    $rating = $_POST["rating"];
-    $roomTemp = $_POST["roomTemp"];
-    $hours = $_POST["hours"];
-    $food = $_POST["food"];
-    $mood = $_POST["mood"];
-    $caffeine = $_POST["caffeine"];
-    $stress = isset($_POST["stress"]) ? 1 : 0;
-    $exercise = $_POST["exercise"];
-    $notes = $_POST["notes"];
-
-    try {
-        // Create a new PDO connection
-        $db = get_pdo_connection();
-
-        // Prepare the call to the stored procedure
-        $stmt = $db->prepare("CALL CreateSleepReport(:patientName, :rating, :roomTemp, :hours, :food, :mood, :caffeine, :stress, :exercise, :notes)");
-
-        // Bind parameters
-        $stmt->bindParam(':patientName', $patientName, PDO::PARAM_STR);
-        $stmt->bindParam(':rating', $rating, PDO::PARAM_INT);
-        $stmt->bindParam(':roomTemp', $roomTemp, PDO::PARAM_STR);
-        $stmt->bindParam(':hours', $hours, PDO::PARAM_STR);
-        $stmt->bindParam(':food', $food, PDO::PARAM_STR);
-        $stmt->bindParam(':mood', $mood, PDO::PARAM_STR);
-        $stmt->bindParam(':caffeine', $caffeine, PDO::PARAM_INT);
-        $stmt->bindParam(':stress', $stress, PDO::PARAM_INT);
-        $stmt->bindParam(':exercise', $exercise, PDO::PARAM_STR);
-        $stmt->bindParam(':notes', $notes, PDO::PARAM_STR);
-
-        // Execute the stored procedure
-        $stmt->execute();
-
-        // Fetch result
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Get the message from the result
-        $reportMsg = $result['Result'];
-
-        header("Location: patientHome.php");
-        exit();
-    } catch (PDOException $e) {
-        $reportMsg = "Error: " . $e->getMessage(); // Return error message if any
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,7 +9,7 @@ if (isset($_POST["submit"])) {
 <body>
     <div class="container">
         <h2>Create Sleep Report</h2>
-        <form method="POST" action="">
+        <form id="createSleepReportForm">
             <div class="form-group">
                 <label for="patientName">Patient Name:</label>
                 <input type="text" id="patientName" name="patientName" required>
@@ -92,7 +35,7 @@ if (isset($_POST["submit"])) {
                 <input type="text" id="mood" name="mood" required>
             </div>
             <div class="form-group">
-                <label for="caffeine">Caffeine Intake(mg):</label>
+                <label for="caffeine">Caffeine Intake (mg):</label>
                 <input type="number" id="caffeine" name="caffeine" required>
             </div>
             <div class="form-group">
@@ -107,12 +50,48 @@ if (isset($_POST["submit"])) {
                 <label for="notes">Notes:</label>
                 <textarea id="notes" name="notes" required></textarea>
             </div>
-            <button type="submit" name="submit">Create Report</button>
+            <button type="submit">Create Report</button>
+            <a id="back" href="patientHome.php">Back to Dashboard</a>
         </form>
-        <?php if ($reportMsg): ?>
-            <p class="message"><?php echo $reportMsg; ?></p>
-        <?php endif; ?>
+        <p id="reportMessage"></p>
     </div>
+
+    <script>
+        document.getElementById("createSleepReportForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+
+            data.stress = document.getElementById("stress").checked;
+
+            try {
+                const response = await fetch('controllers/createSRApi.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const messageElement = document.getElementById("reportMessage");
+
+                if (response.ok) {
+                    messageElement.textContent = result.message;
+                    messageElement.style.color = "green";
+                } else {
+                    messageElement.textContent = result.error || "An error occurred.";
+                    messageElement.style.color = "red";
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const messageElement = document.getElementById("reportMessage");
+                messageElement.textContent = "An unexpected error occurred.";
+                messageElement.style.color = "red";
+            }
+        });
+    </script>
 </body>
 </html>
 
