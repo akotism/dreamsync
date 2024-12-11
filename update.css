@@ -42,9 +42,9 @@ form input[type="submit"]:hover {
 }
 
 button{
+    background-color: #2a2a2a;
     padding: 10px 20px;
-    color: black;
-    background-color: skyblue;
+    color: white;
     border: none;
     cursor: pointer;
     border-radius: 5px;
@@ -53,5 +53,30 @@ button{
     margin-top: 20px;
 }
 button:hover{
-    background-color: #448EE4;
+    background-color: #4b555c;
+}
+
+
+#back {
+    background-color: #2a2a2a;
+    padding: 10px 20px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 20px;
+}
+#back:hover {
+    background-color: #4b555c;
+}
+footer{
+    background-color:hsl(218, 10%, 15%);
+    font-size:14px;
+    color:#ffffff;
+    bottom:0;
+    width:100%;
+    font-family: verdana;    
+    position:fixed;
 }
