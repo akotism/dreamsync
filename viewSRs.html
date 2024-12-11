@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Reports</title>
+    <link rel="stylesheet" href="./viewSR.css">
+</head>
+<body>
+    <h1>Sleep Reports</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Rating</th>
+                <th>Room Temperature</th>
+                <th>Sleep Hours</th>
+                <th>Food</th>
+                <th>Mood</th>
+                <th>Caffeine (mg)</th>
+                <th>Stress Level</th>
+                <th>Exercise</th>
+                <th>Notes</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="sleepReportsTableBody">
+            <!-- Rows will be populated dynamically -->
+        </tbody>
+    </table>
+    <nav>
+        <ul>
+            <li><a href="./patientHome.php">Back to dashboard</a></li>
+        </ul>
+    </nav>
+    <form action="logout.php" method="post">
+        <button type="submit" id="logout" name="logout">Logout</button>
+    </form>
+
+    <script>
+        async function loadSleepReports() {
+            try {
+                const response = await fetch('controllers/viewSRsApi.php');
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data: ${response.status}`);
+                }
+                const sleepReports = await response.json();
+
+                if (sleepReports.error) {
+                    console.error("API Error:", sleepReports.error);
+                    return;
+                }
+
+                const tableBody = document.getElementById('sleepReportsTableBody');
+                tableBody.innerHTML = ''; 
+
+                sleepReports.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.SRDate}</td>
+                        <td>${row.Rating}</td>
+                        <td>${row.RoomTemperature}</td>
+                        <td>${row.Hours}</td>
+                        <td>${row.Food}</td>
+                        <td>${row.Mood}</td>
+                        <td>${row.Caffeine}</td>
+                        <td>${row.Stress}</td>
+                        <td>${row.Exercise}</td>
+                        <td>${row.Notes}</td>
+                        <td>
+                            <form action="editSR.php" method="POST">
+                                <input type="hidden" name="SRDate" value="${row.SRDate}">
+                                <button type="submit">Update</button>
+                            </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error loading sleep reports:', error);
+            }
+        }
+
+        loadSleepReports();
+    </script>
+</body>
+</html>
