@@ -1,35 +1,24 @@
 <?php
-// Include your database configuration file
 require_once("config.php");
 
-// Initialize variables
 $deleteMsg = "";
 
-// Check if form is submitted
 if (isset($_POST["submit"])) {
-    // Get the patient ID from the form
     $patientID = $_POST["patientID"];
 
     try {
-        // Create a new PDO connection
         $db = get_pdo_connection();
 
-        // Prepare the call to the stored procedure
         $stmt = $db->prepare("CALL DeletePatientRecord(:patientID)");
 
-        // Bind the parameter
         $stmt->bindParam(':patientID', $patientID, PDO::PARAM_INT);
 
-        // Execute the stored procedure
         $stmt->execute();
 
-        // Fetch result
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Get the message from the result
         $deleteMsg = $result['Message'];
 
-        // Redirect to login.php after deleting the record
         header("Location: login.php");
         exit(); // Stop further execution
     } catch (PDOException $e) {
@@ -44,22 +33,35 @@ if (isset($_POST["submit"])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delete Patient Record</title>
-    <link rel="stylesheet" href="./delete.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
-<body>
-    <div class="container">
-        <h2>Delete Patient Record</h2>
-        <form method="POST" action="">
-            <div class="form-group">
-                <label for="patientID">Patient ID:</label>
-                <input type="number" id="patientID" name="patientID" required>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="card shadow p-4">
+            <h2 class="text-danger text-center">Delete Patient Record</h2>
+            <p class="text-muted text-center">Please confirm your Patient ID to delete your account.</p>
+            <form method="POST" action="" class="text-center">
+                <div class="mb-3">
+                    <label for="patientID" class="form-label">Patient ID:</label>
+                    <input type="number" id="patientID" name="patientID" class="form-control w-50 mx-auto" required>
+                </div>
+                <button type="submit" name="submit" class="btn btn-danger w-50 mb-3">Delete Record</button>
+            </form>
+            <div class="text-center">
+                <a href="patientHome.php" class="btn btn-secondary w-50">Return to Dashboard</a>
             </div>
-            <button type="submit" name="submit">Delete Record</button>
-        </form>
-        <?php if ($deleteMsg): ?>
-            <p class="message"><?php echo $deleteMsg; ?></p>
-        <?php endif; ?>
+            <?php if ($deleteMsg): ?>
+                <div class="alert mt-4 <?php echo strpos($deleteMsg, 'successfully') !== false ? 'alert-success' : 'alert-danger'; ?>">
+                    <?php echo $deleteMsg; ?>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
 
