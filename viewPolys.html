@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Reports</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .table-container {
+            margin: 20px auto;
+            max-width: 90%;
+        }
+        .chart-container {
+            margin: 40px auto;
+            max-width: 80%;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        #chart {
+            height: 400px;
+        }
+        footer {
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sleep Reports</h1>
+
+    <!-- Chart Section -->
+    <div class="chart-container">
+        <h3 class="text-center">Sleep Hours and Ratings Overview</h3>
+        <canvas id="chart"></canvas>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-container">
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Rating</th>
+                    <th>Room Temperature</th>
+                    <th>Sleep Hours</th>
+                    <th>Food</th>
+                    <th>Mood</th>
+                    <th>Caffeine (mg)</th>
+                    <th>Stress Level</th>
+                    <th>Exercise</th>
+                    <th>Notes</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="sleepReportsTableBody"></tbody>
+        </table>
+    </div>
+
+    <nav class="text-center mb-3">
+        <a href="./patientHome.php" class="btn btn-secondary">Back to dasboard</a>
+    </nav>
+    <form action="logout.php" method="post" class="text-center mb-3">
+        <button type="submit" id="logout" name="logout" class="btn btn-danger">Logout</button>
+    </form>
+
+    <script>
+        async function loadSleepReports() {
+            try {
+                const response = await fetch('controllers/viewPolysApi.php');
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data: ${response.status}`);
+                }
+                const sleepReports = await response.json();
+
+                if (sleepReports.error) {
+                    console.error("API Error:", sleepReports.error);
+                    return;
+                }
+
+                const tableBody = document.getElementById('sleepReportsTableBody');
+                tableBody.innerHTML = ''; // Clear existing rows
+
+                // Data for Chart.js
+                const labels = [];
+                const sleepHours = [];
+                const ratings = [];
+
+                sleepReports.forEach(row => {
+                    labels.push(row.SRDate);
+                    sleepHours.push(row.Hours);
+                    ratings.push(row.Rating);
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.SRDate}</td>
+                        <td>${row.Rating}</td>
+                        <td>${row.RoomTemperature}</td>
+                        <td>${row.Hours}</td>
+                        <td>${row.Food}</td>
+                        <td>${row.Mood}</td>
+                        <td>${row.Caffeine}</td>
+                        <td>${row.Stress}</td>
+                        <td>${row.Exercise}</td>
+                        <td>${row.Notes}</td>
+                        <td>
+                            <form action="editSR.php" method="POST">
+                                <input type="hidden" name="SRDate" value="${row.SRDate}">
+                                <button type="submit" class="btn btn-warning btn-sm">Update</button>
+                            </form>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                // Initialize Chart.js
+                const ctx = document.getElementById('chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Sleep Hours',
+                                data: sleepHours,
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                            },
+                            {
+                                label: 'Ratings',
+                                data: ratings,
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Sleep Report Trends'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading sleep reports:', error);
+            }
+        }
+
+        loadSleepReports();
+    </script>
+</body>
+</html>
