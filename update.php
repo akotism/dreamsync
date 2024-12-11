@@ -1,47 +1,3 @@
-<?php
-// Include your database configuration file
-require_once("config.php");
-
-// Initialize variables
-$updateMsg = "";
-
-// Check if form is submitted
-if (isset($_POST["submit"])) {
-    // Get the form inputs
-    $patientID = $_POST["patientID"];
-    $newName = $_POST["newName"];
-    $newAge = $_POST["newAge"];
-    $newSex = $_POST["newSex"];
-    $newHeight = $_POST["newHeight"];
-
-    try {
-        // Create a new PDO connection
-        $db = get_pdo_connection();
-
-        // Prepare the call to the stored procedure
-        $stmt = $db->prepare("CALL UpdatePatientRecord(:patientID, :newName, :newAge, :newSex, :newHeight)");
-
-        // Bind the parameters
-        $stmt->bindParam(':patientID', $patientID, PDO::PARAM_INT);
-        $stmt->bindParam(':newName', $newName, PDO::PARAM_STR);
-        $stmt->bindParam(':newAge', $newAge, PDO::PARAM_INT);
-        $stmt->bindParam(':newSex', $newSex, PDO::PARAM_STR);
-        $stmt->bindParam(':newHeight', $newHeight, PDO::PARAM_STR);
-
-        // Execute the stored procedure
-        $stmt->execute();
-
-        // Fetch result
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Get the message from the result
-        $updateMsg = $result['Message'];
-    } catch (PDOException $e) {
-        $updateMsg = "Error: " . $e->getMessage(); // Return error message if any
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,7 +8,7 @@ if (isset($_POST["submit"])) {
 </head>
 <body>
     <h2>Update Patient Record</h2>
-    <form method="POST" action="">
+    <form id="updatePatientForm">
         <label for="patientID">Patient ID:</label>
         <input type="number" id="patientID" name="patientID" required><br>
         <label for="newName">New Name:</label>
@@ -63,11 +19,45 @@ if (isset($_POST["submit"])) {
         <input type="text" id="newSex" name="newSex" required><br>
         <label for="newHeight">New Height:</label>
         <input type="text" id="newHeight" name="newHeight" required><br>
-        <button type="submit" name="submit">Update Record</button>
+        <button type="submit">Update Record</button>
+        <a id="back" href="patientHome.php">Back to Dashboard</a>
     </form>
-    <?php if ($updateMsg): ?>
-        <p><?php echo $updateMsg; ?></p>
-    <?php endif; ?>
+    <p id="updateMessage"></p>
+
+    <script>
+        // Handle the form submission
+        document.getElementById("updatePatientForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('controllers/updateApi.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const messageElement = document.getElementById("updateMessage");
+
+                if (response.ok) {
+                    messageElement.textContent = result.message;
+                    messageElement.style.color = "green";
+                } else {
+                    messageElement.textContent = result.error || "An error occurred.";
+                    messageElement.style.color = "red";
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const messageElement = document.getElementById("updateMessage");
+                messageElement.textContent = "An unexpected error occurred.";
+                messageElement.style.color = "red";
+            }
+        });
+    </script>
 </body>
 </html>
-
