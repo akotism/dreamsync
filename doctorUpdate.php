@@ -1,111 +1,47 @@
-<?php
-// Start the session
-session_start();
-
-// Check if session variables are set
-if (!isset($_SESSION["ID"]) || !isset($_SESSION["dname"])) {
-    echo "Session data not set. Please log in again.";
-    exit;
-}
-
-require_once("config.php");
-
-$db = get_db();
-
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate input
-    $errors = [];
-    $pid = $_POST["PID"];
-    $weight = trim($_POST["Weight"]);
-    $height = trim($_POST["Height"]);
-    $age = trim($_POST["Age"]);
-    $password = trim($_POST["Password"]);
-    $did = trim($_POST["DID"]);
-
-    $params = [];
-    $query = "UPDATE Patient SET ";
-
-    if (!empty($weight)) {
-        $query .= "Weight = ?, ";
-        $params[] = $weight;
-    }
-    if (!empty($height)) {
-        $query .= "Height = ?, ";
-        $params[] = $height;
-    }
-    if (!empty($age) && is_numeric($age)) {
-        $query .= "Age = ?, ";
-        $params[] = $age;
-    }
-    if (!empty($did) && is_numeric($did)) {
-        $query .= "DID = ?, ";
-        $params[] = $did;
-    }
-    if (!empty($password)) {
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $query .= "Password = ?, Hash = ?, ";
-        $params[] = $password;
-        $params[] = $hashedPassword;
-    }
-
-    // Remove the trailing comma and space
-    $query = rtrim($query, ", ");
-    $query .= " WHERE PID = ?";
-    $params[] = $pid;
-
-    if (empty($errors)) {
-        $stmt = $db->prepare($query);
-        if ($stmt->execute($params)) {
-            $successMessage = "Patient information updated successfully.";
-        } else {
-            $errors[] = "Failed to update patient information.";
-        }
-    }
-}
-
-// Fetch patients for the dropdown
-$patientsQuery = $db->prepare("SELECT PID, pname, Sex FROM Patient WHERE DID = ?");
-$patientsQuery->bindParam(1, $_SESSION["ID"], PDO::PARAM_INT);
-$patientsQuery->execute();
-$patients = $patientsQuery->fetchAll(PDO::FETCH_ASSOC);
-?>
-
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Patient Information</title>
+    <link rel="stylesheet" href="./doctorUpdate.css">
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1>Update Patient Information</h1>
-            <a id="back" href="doctorHome.php">Back to Dashboard</a>
+            <a id="back" href="doctorHome.php">Return to Dashboard</a>
         </div>
-        <?php if (!empty($errors)): ?>
-            <div class="error">
-                <ul>
-                    <?php foreach ($errors as $error): ?>
-                        <li><?php echo htmlspecialchars($error); ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
-        <?php if (!empty($successMessage)): ?>
-            <div class="success">
-                <?php echo htmlspecialchars($successMessage); ?>
-            </div>
-        <?php endif; ?>
-        <form action="doctorUpdate.php" method="post">
+        <div id="messages"></div>
+        <form id="updateForm">
             <label for="PID">Select Patient:</label>
             <select id="PID" name="PID" required>
-                <?php foreach ($patients as $patient): ?>
-                    <option value="<?php echo htmlspecialchars($patient['PID']); ?>">
-                        <?php echo htmlspecialchars($patient['pname']); ?> (<?php echo htmlspecialchars($patient['Sex']); ?>)
-                    </option>
-                <?php endforeach; ?>
+                <?php
+                session_start();
+                require_once("config.php");
+
+                if (!isset($_SESSION["ID"])) {
+                    echo "<option value=''>Session not set. Please log in again.</option>";
+                } else {
+                    $db = get_db();
+                    $patientsQuery = $db->prepare("SELECT PID, pname, Sex FROM Patient WHERE DID = ?");
+                    $patientsQuery->bindParam(1, $_SESSION["ID"], PDO::PARAM_INT);
+                    $patientsQuery->execute();
+                    $patients = $patientsQuery->fetchAll(PDO::FETCH_ASSOC);
+
+                    if (empty($patients)) {
+                        echo "<option value=''>No patients available</option>";
+                    } else {
+                        foreach ($patients as $patient) {
+                            echo "<option value='" . htmlspecialchars($patient['PID']) . "'>" .
+                                htmlspecialchars($patient['pname']) . " (" . htmlspecialchars($patient['Sex']) . ")" .
+                                "</option>";
+                        }
+                    }
+                }
+                ?>
             </select>
             <label for="Weight">Weight:</label>
             <input type="text" id="Weight" name="Weight">
@@ -120,7 +56,41 @@ $patients = $patientsQuery->fetchAll(PDO::FETCH_ASSOC);
             <button type="submit">Update Patient</button>
         </form>
     </div>
+    <footer>© 2024 dreamsync</footer>
+
+    <script>
+        document.getElementById("updateForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch("controllers/docUpdateApi.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const messages = document.getElementById("messages");
+                messages.innerHTML = "";
+
+                if (response.ok) {
+                    messages.innerHTML = `<div class="success">${result.message}</div>`;
+                } else {
+                    messages.innerHTML = `<div class="error"><ul>${result.errors.map(err => `<li>${err}</li>`).join("")}</ul></div>`;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById("messages").innerHTML = `<div class="error">An error occurred. Please try again.</div>`;
+            }
+        });
+    </script>
 </body>
+
 </html>
 
 
