@@ -1,78 +1,18 @@
-<?php
-// Start the session
-session_start();
-
-// Check if session variables are set
-if (!isset($_SESSION["ID"])) {
-    echo "Session data not set. Please log in again.";
-    exit;
-}
-
-require_once("config.php");
-
-$reportMsg = "";
-
-$db = get_db();
-
-$patientsQuery = $db->prepare("SELECT PID, pname FROM Patient WHERE DID = ?");
-$patientsQuery->bindParam(1, $_SESSION["ID"], PDO::PARAM_INT);
-$patientsQuery->execute();
-$patients = $patientsQuery->fetchAll(PDO::FETCH_ASSOC);
-
-// Check if form is submitted
-if (isset($_POST["submit"])) {
-    $pdate = $_POST["pdate"];
-    $pid = $_POST["PID"];
-    $did = $_SESSION["ID"];  // Get doctor ID from session
-    $n1time = $_POST["n1time"];
-    $n2time = $_POST["n2time"];
-    $n3time = $_POST["n3time"];
-    $remtime = $_POST["remtime"];
-    $oxygenlevels = $_POST["oxygenlevels"];
-    $timeswokenup = $_POST["timeswokenup"];
-    $heartrate = $_POST["heartrate"];
-
-    try {
-        // Prepare the SQL query
-        $stmt = $db->prepare("INSERT INTO Polysomnogram (PDate, PID, DID, N1Time, N2Time, N3Time, REMTime, OxygenLevels, TimesWokenUp, HeartRate) VALUES (:pdate, :pid, :did, :n1time, :n2time, :n3time, :remtime, :oxygenlevels, :timeswokenup, :heartrate)");
-
-        // Bind parameters
-        $stmt->bindParam(':pdate', $pdate, PDO::PARAM_STR);
-        $stmt->bindParam(':pid', $pid, PDO::PARAM_INT);
-        $stmt->bindParam(':did', $did, PDO::PARAM_INT);
-        $stmt->bindParam(':n1time', $n1time, PDO::PARAM_STR);
-        $stmt->bindParam(':n2time', $n2time, PDO::PARAM_STR);
-        $stmt->bindParam(':n3time', $n3time, PDO::PARAM_STR);
-        $stmt->bindParam(':remtime', $remtime, PDO::PARAM_STR);
-        $stmt->bindParam(':oxygenlevels', $oxygenlevels, PDO::PARAM_STR);
-        $stmt->bindParam(':timeswokenup', $timeswokenup, PDO::PARAM_INT);
-        $stmt->bindParam(':heartrate', $heartrate, PDO::PARAM_INT);
-
-        // Execute the query
-        $stmt->execute();
-
-        $reportMsg = "Polysomnogram created successfully.";
-
-        // Redirect to the same page to avoid form resubmission
-        header("Location: createPS.php");
-        exit;
-    } catch (PDOException $e) {
-        $reportMsg = "Error: " . $e->getMessage(); // Return error message if any
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Polysomnogram</title>
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="createPS.css">
+    <lin
+
 </head>
 <body>
     <div class="container">
         <h2>Create Polysomnogram</h2>
-        <form method="POST" action="createPS.php">
+        <form id="createPSForm">
             <div class="form-group">
                 <label for="pdate">Date:</label>
                 <input type="date" id="pdate" name="pdate" required>
@@ -80,11 +20,7 @@ if (isset($_POST["submit"])) {
             <div class="form-group">
                 <label for="PID">Select Patient:</label>
                 <select id="PID" name="PID" required>
-                    <?php foreach ($patients as $patient): ?>
-                        <option value="<?php echo htmlspecialchars($patient['PID']); ?>">
-                            <?php echo htmlspecialchars($patient['pname']); ?>
-                        </option>
-                    <?php endforeach; ?>
+                    <!-- This dropdown will be populated dynamically -->
                 </select>
             </div>
             <div class="form-group">
@@ -115,12 +51,73 @@ if (isset($_POST["submit"])) {
                 <label for="heartrate">Average Heart Rate:</label>
                 <input type="number" id="heartrate" name="heartrate">
             </div>
-            <button type="submit" name="submit">Create</button>
+            <button type="submit">Create</button>
         </form>
-        <?php if ($reportMsg): ?>
-            <p class="message"><?php echo $reportMsg; ?></p>
-        <?php endif; ?>
+        <p id="message" class="message"></p>
+        <button onclick="location.href='./doctorHome.php'">Return to Dashboard</button>
     </div>
+
+    <script>
+        // Populate the patients dropdown
+    async function loadPatients() {
+        try {
+        const response = await fetch("controllers/createPSApi.php");
+        const rawText = await response.text(); // Get raw response for debugging
+
+        try {
+            const patients = JSON.parse(rawText); // Attempt to parse JSON
+            console.log("Patients fetched:", patients);
+
+            const patientDropdown = document.getElementById("PID");
+            patientDropdown.innerHTML = patients
+                .map((patient) => `<option value="${patient.PID}">${patient.pname}</option>`)
+                .join("");
+        } catch (jsonError) {
+            console.error("Invalid JSON response:", rawText);
+        }
+    } catch (error) {
+        console.error("Error loading patients:", error);
+    }
+}
+
+loadPatients();
+
+
+        document.getElementById("createPSForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch("api/createPSApi.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const messageElement = document.getElementById("message");
+
+                if (response.ok) {
+                    messageElement.textContent = result.message;
+                    messageElement.style.color = "green";
+                } else {
+                    messageElement.textContent = result.error || "An error occurred.";
+                    messageElement.style.color = "red";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                const messageElement = document.getElementById("message");
+                messageElement.textContent = "An unexpected error occurred.";
+                messageElement.style.color = "red";
+            }
+        });
+
+        // Load patients on page load
+        loadPatients();
+    </script>
 </body>
 </html>
-
